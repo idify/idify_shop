@@ -6,7 +6,7 @@ set :application, "IdifyShop"
 set :repository,  "git@github.com:idify/idify_shop.git"
 
 # via the :deploy_to variable:
-set :deploy_to, "/var/local/#{application}"
+set :deploy_to, "/var/www/#{application}"
  
 # If you aren't using Subversion to manage your source code, specify
 # your SCM below:
@@ -17,11 +17,12 @@ set :branch, "master"
 set :passenger_conf, true
 set :user, "root" # Login as?
 set :use_sudo, false
+set :current_release, release_path
  
  
-role :web, domain                          # Your HTTP server, Apache/etc
-role :app, domain                          # This may be the same as your `Web` server
-role :db,  domain, :primary => true        # This is where Rails migrations will run
+role :web, server                          # Your HTTP server, Apache/etc
+role :app, server                          # This may be the same as your `Web` server
+role :db,  server, :primary => true        # This is where Rails migrations will run
 #role :db,  "your slave db-server here"
  
 set :rails_env, "production"
