@@ -1,40 +1,68 @@
-set :application, 'my_app_name'
-set :repo_url, 'git@example.com:me/my_repo.git'
+require "bundler/capistrano"
 
-# ask :branch, proc { `git rev-parse --abbrev-ref HEAD`.chomp }
+# require 'airbrake/capistrano'
 
-# set :deploy_to, '/var/www/my_app'
-# set :scm, :git
+server = "50.116.56.223" 
 
-# set :format, :pretty
-# set :log_level, :debug
-# set :pty, true
+set :application, "IdifyShop"
+set :repository,  "git@github.com:idify/idify_shop.git"
+#set :port, 6969
 
-# set :linked_files, %w{config/database.yml}
-# set :linked_dirs, %w{bin log tmp/pids tmp/cache tmp/sockets vendor/bundle public/system}
+set :use_sudo,  false
 
-# set :default_env, { path: "/opt/ruby/bin:$PATH" }
-# set :keep_releases, 5
+set :scm, "git"
+set :user,      'root'#'myweightworld'
+set :password,  '' #'MYweight404'
+
+set :keep_releases, 5
+set :branch, "master"
+
+set :rails_env, 'production'
+
+set :deploy_to, "/var/www/IdifyShop" #"/home/#{user}/apps/#{application}"
+set :deploy_via, :remote_cache
+
+default_run_options[:pty] = true
+
+role :web, server
+role :app, server
+role :db,  server, :primary => true
+
+after "deploy:update_code", "deploy:symlink_config"
+after "deploy:update_code", "deploy:generate_tinymce_cache"
+after 'deploy:update_code', "deploy:precompile_assets"
+after "deploy",             "deploy:cleanup"
+# after "deploy",             "deploy:build_missing_paperclip_styles"
+
+
+
+#after "deploy:symlink", "deploy:update_crontab"
+
 
 namespace :deploy do
-
-  desc 'Restart application'
-  task :restart do
-    on roles(:app), in: :sequence, wait: 5 do
-      # Your restart mechanism here, for example:
-      # execute :touch, release_path.join('tmp/restart.txt')
-    end
+  desc "build missing paperclip styles"
+  task :build_missing_paperclip_styles, :roles => :app do
+    run "cd #{release_path}; RAILS_ENV=production bundle exec rake paperclip:refresh:missing_styles"
   end
-
-  after :restart, :clear_cache do
-    on roles(:web), in: :groups, limit: 3, wait: 10 do
-      # Here we can do anything such as:
-      # within release_path do
-      #   execute :rake, 'cache:clear'
-      # end
-    end
+  
+  task :precompile_assets, :roles => :app do
+    run "cd #{release_path} && rm -rf public/assets/*"
+    run "cd #{release_path} && RAILS_ENV=production bundle exec rake assets:precompile"
   end
-
-  after :finishing, 'deploy:cleanup'
-
+  
+  task :symlink_config, :roles => :app, :except => {:no_release => true, :no_symlink => true} do
+    run "ln -nsf #{shared_path}/config/database.yml #{current_release}/config"
+  end
+  
+  task :generate_tinymce_cache, :roles => :app do
+    run "cd #{current_release} && RAILS_ENV=production bundle exec rake tinymce:cache_js"
+  end
+  
+  task :restart, :roles => :app, :except => { :no_release => true } do
+    run "#{try_sudo} touch #{File.join(current_path,'tmp','restart.txt')}"
+  end
 end
+
+
+
+
