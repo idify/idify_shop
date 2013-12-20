@@ -8,6 +8,7 @@ gem 'mysql2'
 gem 'spree', github: 'spree/spree', branch: '2-1-stable'
 gem 'spree_auth_devise', github: 'spree/spree_auth_devise', branch: '2-1-stable'
 gem 'spree_fancy', :git => 'git://github.com/spree/spree_fancy.git', :branch => '2-1-stable'
+gem 'capistrano', '~> 3.0.1'
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 4.0.0'
 
